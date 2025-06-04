@@ -1,1 +1,0 @@
-# mobile-seba-electricity-bot
