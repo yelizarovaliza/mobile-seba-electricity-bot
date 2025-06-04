@@ -3,6 +3,7 @@ import React from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from './themeContext';
+import DeviceCard from '@/components/deviceCard';
 
 const UserProfile = () => {
   const { theme, toggleTheme } = useTheme();
@@ -45,27 +46,10 @@ const UserProfile = () => {
         <Text style={[styles.info, { color: theme.muted }]}>Address: {user.address}</Text>
 
         <Text style={[styles.deviceTitle, { color: theme.text }]}>Devices:</Text>
-        <FlatList
-          data={user.devices}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.deviceList}
-          renderItem={({ item }) => (
-            <View style={[styles.deviceCard, { backgroundColor: theme.card }]}>
-              <View>
-                <Text style={[styles.deviceLocation, { color: theme.text }]}>{item.location}</Text>
-                <Text style={[styles.deviceStatus, { color: theme.muted }]}>
-                  Status: {item.status.toUpperCase()}
-                </Text>
-              </View>
-              <Pressable
-                style={[styles.viewButton, { backgroundColor: theme.accent }]}
-                onPress={() => alert(`Details for ${item.location}`)}
-              >
-                <Text style={styles.viewText}>View</Text>
-              </Pressable>
-            </View>
-          )}
-        />
+        <View style={styles.deviceList}>
+        <DeviceCard location="Home" status="on" onViewPress={() => alert('Home')} />
+        <DeviceCard location="Work" status="off" onViewPress={() => alert('Work')} />
+        </View>
       </View>
     </SafeAreaView>
   );

@@ -1,6 +1,6 @@
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from './themeContext';
 
@@ -12,11 +12,12 @@ const HomeScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         {/* Profile Button*/}
-        <Link href="/user" asChild>
-          <TouchableOpacity style={[styles.linkButton, { backgroundColor: theme.card }]}>
-            <Text style={[styles.linkText, { color: theme.icon }]}>👤</Text>
-          </TouchableOpacity>
-        </Link>
+        <Pressable
+          onPress={() => router.push('/user')}
+          style={[styles.iconButton, { backgroundColor: theme.card }]}
+        >
+          <Text style={[styles.iconText, { color: theme.icon }]}>👤</Text>
+        </Pressable>
       </View>
 
       {/* Main Content */}
@@ -59,14 +60,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 10,
   },
-  linkButton: {
+  iconButton: {
     width: 40,
     height: 40,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  linkText: {
+  iconText: {
     fontSize: 22,
   },
   container: {
