@@ -1,5 +1,10 @@
-import { Stack } from "expo-router";
+import { Stack } from 'expo-router';
+import { ThemeProvider } from './themeContext';
 
-export default function RootLayout() {
-  return <Stack />;
+export default function Layout() {
+  return (
+    <ThemeProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </ThemeProvider>
+  );
 }
