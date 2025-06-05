@@ -1,8 +1,9 @@
-import { Link, router } from 'expo-router';
+import { Link, router, useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from './themeContext';
+import IconButton from '@/components/iconButton';
 
 const HomeScreen = () => {
   const { theme } = useTheme();
@@ -12,12 +13,9 @@ const HomeScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         {/* Profile Button*/}
-        <Pressable
-          onPress={() => router.push('/user')}
-          style={[styles.iconButton, { backgroundColor: theme.card }]}
-        >
-          <Text style={[styles.iconText, { color: theme.icon }]}>👤</Text>
-        </Pressable>
+        <View style={styles.header}>
+        <IconButton icon="👤" onPress={() => router.push('/user')} />
+          </View>
       </View>
 
       {/* Main Content */}
@@ -59,16 +57,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingHorizontal: 20,
     marginTop: 10,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconText: {
-    fontSize: 22,
   },
   container: {
     flex: 1,

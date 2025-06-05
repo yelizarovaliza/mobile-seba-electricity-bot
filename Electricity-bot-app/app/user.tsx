@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from './themeContext';
 import DeviceCard from '@/components/deviceCard';
+import IconButton from '@/components/iconButton';
 
 const UserProfile = () => {
   const { theme, toggleTheme } = useTheme();
@@ -26,18 +27,8 @@ const UserProfile = () => {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       {/* Header + home + theme buttons */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.push('/')} style={[styles.iconButton, { backgroundColor: theme.card }]}>
-          <Text style={[styles.iconText, { color: theme.icon }]}>🏠</Text>
-        </Pressable>
-        <Pressable 
-          onPress={() => {
-            console.log('Theme toggle pressed');
-            toggleTheme();
-          }} 
-          style={[styles.iconButton, { backgroundColor: theme.card, marginLeft: 10 }]}
-        >
-          <Text style={[styles.iconText, { color: theme.icon }]}>🌓</Text>
-        </Pressable>
+        <IconButton icon="🏠" onPress={() => router.push('/')} />
+        <IconButton icon="🌓" onPress={toggleTheme} style={{ marginLeft: 10 }} />
       </View>
 
       <View style={styles.container}>
@@ -66,16 +57,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingHorizontal: 20,
     marginTop: 10,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconText: {
-    fontSize: 22,
   },
   container: {
     flex: 1,
