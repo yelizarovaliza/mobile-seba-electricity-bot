@@ -28,7 +28,8 @@ const UserProfile = () => {
       {/* Header + home + theme buttons */}
       <View style={styles.header}>
         <IconButton icon="🏠" onPress={() => router.push('/')} />
-        <IconButton icon="🌓" onPress={toggleTheme} style={{ marginLeft: 10 }} />
+        <IconButton icon="⚙️" onPress={() => router.push('./settings')} style={{ marginLeft: 10 }} />
+        {/*<IconButton icon="🌓" onPress={toggleTheme} style={{ marginLeft: 10 }} />*/}
       </View>
 
       <View style={styles.container}>
