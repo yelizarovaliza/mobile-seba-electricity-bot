@@ -29,6 +29,7 @@ const UserProfile = () => {
       <View style={styles.header}>
         <IconButton icon="🏠" onPress={() => router.push('/')} />
         <IconButton icon="⚙️" onPress={() => router.push('./settings')} style={{ marginLeft: 10 }} />
+         <IconButton icon="🔐" onPress={() => router.push('./signup')} style={{ marginLeft: 10 }} />
         {/*<IconButton icon="🌓" onPress={toggleTheme} style={{ marginLeft: 10 }} />*/}
       </View>
 
