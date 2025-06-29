@@ -1,36 +1,34 @@
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from './themeContext';
+import { useTheme } from '../context/themeContext';
 import DeviceCard from '@/components/deviceCard';
 import IconButton from '@/components/iconButton';
 
 const UserProfile = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const router = useRouter();
 
-  React.useEffect(() => {
-    console.log('Current theme:', theme);
-  }, [theme]);
-
-  const user = {
+  const [user, setUser] = useState({
     name: 'John Doe',
     address: '123 Main St, Springfield',
-    devices: [
-      { id: '1', location: 'Home', status: 'on' },
-      { id: '2', location: 'Work', status: 'off' },
-    ],
-  };
+  });
+
+  const [devices, setDevices] = useState([
+    {
+      id: 'device-001',
+      status: 'online',
+    },
+  ]);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      {/* Header + home + theme buttons */}
+      {/* Header */}
       <View style={styles.header}>
         <IconButton icon="🏠" onPress={() => router.push('/')} />
         <IconButton icon="⚙️" onPress={() => router.push('./settings')} style={{ marginLeft: 10 }} />
-         <IconButton icon="🔐" onPress={() => router.push('./signup')} style={{ marginLeft: 10 }} />
-        {/*<IconButton icon="🌓" onPress={toggleTheme} style={{ marginLeft: 10 }} />*/}
+        <IconButton icon="🔐" onPress={() => router.push('./signup')} style={{ marginLeft: 10 }} />
       </View>
 
       <View style={styles.container}>
@@ -40,8 +38,22 @@ const UserProfile = () => {
 
         <Text style={[styles.deviceTitle, { color: theme.text }]}>Devices:</Text>
         <View style={styles.deviceList}>
-        <DeviceCard location="Home" status="on" onViewPress={() => alert('Home')} />
-        <DeviceCard location="Work" status="off" onViewPress={() => alert('Work')} />
+          {devices.map((device) => (
+            <DeviceCard
+              key={device.id}
+              status={device.status}
+              onViewPress={() => alert(`Device: ${device.status}`)}
+            />
+          ))}
+        </View>
+
+        {/* ➕ КНОПКА "ДОДАТИ ПРИСТРІЙ" */}
+        <View style={{ marginTop: 20 }}>
+          <Button
+            title="➕ Додати пристрій"
+            onPress={() => router.push('/bluetoothConnect')}
+            color={theme.accent || '#007AFF'}
+          />
         </View>
       </View>
     </SafeAreaView>
@@ -49,6 +61,7 @@ const UserProfile = () => {
 };
 
 export default UserProfile;
+
 
 const styles = StyleSheet.create({
   safeArea: {

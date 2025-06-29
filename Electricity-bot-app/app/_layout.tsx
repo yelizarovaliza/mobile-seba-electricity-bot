@@ -1,10 +1,13 @@
 import { Stack } from 'expo-router';
-import { ThemeProvider } from './themeContext';
+import { ThemeProvider } from '../context/themeContext';
+import { BluetoothProvider } from '../context/bluetoothContext';
 
 export default function Layout() {
   return (
     <ThemeProvider>
-      <Stack screenOptions={{ headerShown: false }} />
+      <BluetoothProvider>
+        <Stack screenOptions={{ headerShown: false }} />
+      </BluetoothProvider>
     </ThemeProvider>
   );
 }

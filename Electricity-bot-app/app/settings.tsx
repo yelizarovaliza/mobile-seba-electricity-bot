@@ -1,6 +1,6 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, Switch, StyleSheet, Alert, ScrollView,} from 'react-native';
-import { useTheme } from './themeContext';
+import { useTheme } from '../context/themeContext';
 import { useNavigation } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import IconButton from '@/components/iconButton';

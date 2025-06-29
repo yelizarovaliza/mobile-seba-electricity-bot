@@ -1,20 +1,18 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../app/themeContext';
+import { useTheme } from '../context/themeContext';
 
 type DeviceProps = {
-  location: string;
   status: string;
   onViewPress?: () => void;
 };
 
-export default function DeviceCard({ location, status, onViewPress }: DeviceProps) {
+export default function DeviceCard({ status, onViewPress }: DeviceProps) {
   const { theme } = useTheme();
 
   return (
     <View style={[styles.card, { backgroundColor: theme.card }]}>
       <View>
-        <Text style={[styles.location, { color: theme.text }]}>{location}</Text>
         <Text style={[styles.status, { color: theme.muted }]}>Status: {status.toUpperCase()}</Text>
       </View>
       <Pressable

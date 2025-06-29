@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme } from './themeContext';
+import { useTheme } from '../context/themeContext';
 import IconButton from '@/components/iconButton';
 
 const SignupScreen = () => {

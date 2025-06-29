@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { useTheme } from '../app/themeContext';
+import { useTheme } from '../context/themeContext';
 
 interface IconButtonProps {
   icon: string;
