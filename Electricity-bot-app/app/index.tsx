@@ -3,7 +3,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/themeContext';
-import IconButton from '@/components/iconButton';
+import IconButton from '../components/iconButton';
 
 const HomeScreen = () => {
   const { theme } = useTheme();

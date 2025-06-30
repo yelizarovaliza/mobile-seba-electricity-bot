@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/themeContext';
-import DeviceCard from '@/components/deviceCard';
-import IconButton from '@/components/iconButton';
+import DeviceCard from '../components/deviceCard';
+import IconButton from '../components/iconButton';
 
 const UserProfile = () => {
   const { theme } = useTheme();

@@ -6,7 +6,7 @@ import base64 from "react-native-base64";
 import { useRouter } from "expo-router";
 import { useBluetooth } from "../context/bluetoothContext";
 import { useTheme } from "../context/themeContext";
-import IconButton from "@/components/iconButton";
+import IconButton from "../components/iconButton";
 
 const manager = new BleManager();
 const SERVICE_UUID = "your-service-uuid";

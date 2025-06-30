@@ -1,9 +1,12 @@
 import React from "react";
 import { View, Text, Button, Alert } from "react-native";
 import { useRouter } from "expo-router";
+import { useTheme } from "../context/themeContext";
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
+  
 
   const registerDevice = async () => {
     try {

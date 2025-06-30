@@ -3,7 +3,7 @@ import {View, Text, TouchableOpacity, Switch, StyleSheet, Alert, ScrollView,} fr
 import { useTheme } from '../context/themeContext';
 import { useNavigation } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import IconButton from '@/components/iconButton';
+import IconButton from '../components/iconButton';
 
 export default function SettingsScreen() {
   const { theme, toggleTheme } = useTheme();
