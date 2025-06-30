@@ -9,8 +9,8 @@ import { useTheme } from "../context/themeContext";
 import IconButton from "../components/iconButton";
 
 const manager = new BleManager();
-const SERVICE_UUID = "your-service-uuid";
-const CHAR_UUID = "your-char-uuid";
+const SERVICE_UUID = "service-uuid";
+const CHAR_UUID = "char-uuid";
 
 export default function BluetoothConnector() {
   const [devices, setDevices] = useState<any[]>([]);

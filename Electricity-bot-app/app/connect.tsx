@@ -27,8 +27,8 @@ export default function ConnectScreen() {
         throw new Error("Пристрій не підключено");
       }
       await connectedDevice.writeCharacteristicWithResponseForService(
-        "your-service-uuid",
-        "your-char-uuid",
+        "service-uuid",
+        "char-uuid",
         payload
       );
 

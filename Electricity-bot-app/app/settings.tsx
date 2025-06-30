@@ -40,10 +40,6 @@ export default function SettingsScreen() {
           <Switch value={theme.background === '#1c1c1e'} onValueChange={toggleTheme} />
         </View>
 
-        <SettingsItem label="Privacy & Security" onPress={() => {}} theme={theme} />
-        <SettingsItem label="Notifications" onPress={() => {}} theme={theme} />
-        <SettingsItem label="About App" onPress={() => {}} theme={theme} />
-
         <SettingsItem label="Log Out" onPress={handleLogout} theme={theme} textColor="red" />
         <SettingsItem label="Delete Account" onPress={handleDeleteAccount} theme={theme} textColor="red" />
       </ScrollView>
