@@ -51,7 +51,7 @@ const UserProfile = () => {
         <View style={{ marginTop: 20 }}>
           <Button
             title="➕ Додати пристрій"
-            onPress={() => router.push('/bluetoothConnect')}
+            onPress={() => router.push('/bluetooth')}
             color={theme.accent || '#007AFF'}
           />
         </View>

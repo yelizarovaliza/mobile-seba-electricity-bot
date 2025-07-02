@@ -10,11 +10,11 @@ export default function RegisterScreen() {
 
   const registerDevice = async () => {
     try {
-      const result = await fetch("https://your.api/devices/register", {
+      const result = await fetch("https://your.api/devices/register", { // server api endpoint
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: "USER123", 
+          userId: "USER123", // storage
           deviceId: "RPi12345", // або connectedDevice.id
           ssid: "MyWiFi", // або з localStorage/params
         }),

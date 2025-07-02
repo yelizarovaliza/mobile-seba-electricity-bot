@@ -17,7 +17,14 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.Electricitybotapp"
+      "package": "com.anonymous.Electricitybotapp",
+      "permissions": [
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_SCAN",
+        "BLUETOOTH_CONNECT",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -34,10 +41,23 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "react-native-ble-manager",
+        {
+          "bluetoothAlwaysPermission": "Allow Bluetooth access at all times",
+          "bluetoothPeripheralPermission": "Allow this app to connect to and manage BLE devices"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0ca74f3d-4394-445b-9b02-2bee231c0508"
+      }
     }
   }
 }
