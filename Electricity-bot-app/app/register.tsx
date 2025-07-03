@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Button, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/themeContext';
 import { useAuth } from '../context/authContext';
 import { API_BASE_URL } from '../utils/apiConfig';

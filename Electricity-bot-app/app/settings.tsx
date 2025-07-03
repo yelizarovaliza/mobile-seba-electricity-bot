@@ -40,26 +40,6 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const handleChangeName = () => {
-    fetch('https://your.api/user/change-name', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'New Name' }),
-    })
-      .then(() => Alert.alert('Success', 'Name updated successfully.'))
-      .catch(() => Alert.alert('Error', 'Failed to update name.'));
-  };
-
-  const handleChangeAddress = () => {
-    fetch('https://your.api/user/change-address', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ address: 'New Address' }),
-    })
-      .then(() => Alert.alert('Success', 'Address updated successfully.'))
-      .catch(() => Alert.alert('Error', 'Failed to update address.'));
-  };
-
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <View style={[styles.header]}>
@@ -67,10 +47,6 @@ export default function SettingsScreen() {
       </View>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={[styles.heading, { color: theme.text }]}>Settings</Text>
-
-        <SettingsItem label="Change Name" onPress={handleChangeName} theme={theme} />
-        <SettingsItem label="Change Address" onPress={handleChangeAddress} theme={theme} />
-        <SettingsItem label="Change Language" onPress={() => navigation.navigate('language' as never)} theme={theme} />
 
         <View style={[styles.switchItem, { borderBottomColor: theme.muted }]}>
           <Text style={[styles.itemLabel, { color: theme.text }]}>Dark Theme</Text>
@@ -84,7 +60,7 @@ export default function SettingsScreen() {
   );
 }
 
-function SettingsItem({ label, onPress, theme, textColor }: { label: string; onPress: () => void; theme: any; textColor?: string }) {
+function SettingsItem({ label, onPress, theme, textColor }) {
   return (
     <TouchableOpacity style={[styles.item, { borderBottomColor: theme.muted }]} onPress={onPress}>
       <Text style={[styles.itemLabel, { color: textColor || theme.text }]}>{label}</Text>

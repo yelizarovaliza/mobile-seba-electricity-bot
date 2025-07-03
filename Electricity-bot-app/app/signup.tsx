@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/themeContext';
 import IconButton from '../components/iconButton';
 import { useAuth } from '../context/authContext';
@@ -50,10 +51,10 @@ const SignupScreen = () => {
         login(email, data.token);
         router.push('/');
       } else {
-        setError(data.message || 'Signup failed.');
+        setError(data.message || 'Signup failed. Please try again');
       }
     } catch (error) {
-      setError(error.message);
+      setError(error.message || 'Network error. Try again later');
     }
   };
 

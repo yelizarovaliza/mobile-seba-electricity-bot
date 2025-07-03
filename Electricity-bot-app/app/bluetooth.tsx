@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, View, Text, Button, FlatList, Alert, ActivityIndicator, TextInput, PermissionsAndroid, Platform, ScrollView, KeyboardAvoidingView, StyleSheet } from 'react-native';
+import { View, Text, Button, FlatList, Alert, ActivityIndicator, TextInput, PermissionsAndroid, Platform, ScrollView, KeyboardAvoidingView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { BleManager } from 'react-native-ble-plx';
 import { useRouter } from 'expo-router';
 import base64 from 'react-native-base64';

@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 import { useTheme } from '../context/themeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import IconButton from '../components/iconButton';
 import { useAuth } from '../context/authContext';
 import { API_BASE_URL } from '../utils/apiConfig';
@@ -18,11 +19,8 @@ const LoginScreen = () => {
   const isSecurePassword = (password) => /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
 
   const handleLogin = async () => {
-    if (!isValidEmail(email)) {
-      setError('Invalid email format.');
-      return;
-    } else if (!isValidPassword(password)) {
-      setError('Password is too weak.');
+    if (!isValidEmail(email) || !isSecurePassword(password)) {
+      setError('Please enter valid credentials');
       return;
     }
 
@@ -41,10 +39,10 @@ const LoginScreen = () => {
         login(email, data.token);
         router.push('/');
       } else {
-        setError(data.error || 'Login failed.');
+        setError(data.error || 'Invalid email or password.');
       }
     } catch (error) {
-      setError(error.message);
+      setError(error.message || 'Network error. Please try again later');
     }
   };
 
