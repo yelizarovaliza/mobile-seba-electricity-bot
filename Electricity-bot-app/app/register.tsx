@@ -3,6 +3,7 @@ import { View, Text, Button, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../context/themeContext';
 import { useAuth } from '../context/authContext';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function RegisterScreen() {
     }
 
     try {
-      const response = await fetch('https://60bf-85-114-193-81.ngrok-free.app/devices/register', {
+      const response = await fetch('${API_BASE_URL}/devices/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -25,6 +26,8 @@ export default function RegisterScreen() {
         },
         body: JSON.stringify({ deviceUuid: deviceId }),
       });
+        const data = await response.json();
+        console.log("Server Response:", data);
 
       if (response.ok) {
         Alert.alert('Success', 'Device registered');

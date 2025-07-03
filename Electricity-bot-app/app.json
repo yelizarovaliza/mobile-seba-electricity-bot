@@ -50,8 +50,7 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ],
-      "react-native-ble-plx"
+      ]
     ],
     "experiments": {
       "typedRoutes": true

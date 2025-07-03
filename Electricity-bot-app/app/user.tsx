@@ -6,6 +6,7 @@ import { useTheme } from '../context/themeContext';
 import IconButton from '../components/iconButton';
 import DeviceCard from '../components/deviceCard';
 import { useAuth } from '../context/authContext';
+import {API_BASE_URL} from '../utils/apiConfig'
 
 const UserProfile = () => {
   const { theme } = useTheme();
@@ -45,7 +46,7 @@ const UserProfile = () => {
       style: 'destructive',
       onPress: async () => {
         try {
-          const response = await fetch('https://60bf-85-114-193-81.ngrok-free.app/devices/delete/' + deviceId, {
+          const response = await fetch('${API_BASE_URL}/devices/delete/' + deviceId, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${authToken}`,
