@@ -1,40 +1,46 @@
-import React from "react";
-import { View, Text, Button, Alert } from "react-native";
-import { useRouter } from "expo-router";
-import { useTheme } from "../context/themeContext";
+import React from 'react';
+import { View, Text, Button, Alert } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useTheme } from '../context/themeContext';
+import { useAuth } from '../context/authContext';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  
+  const { authToken } = useAuth();
+  const { deviceId } = useLocalSearchParams<{ deviceId?: string }>();
 
   const registerDevice = async () => {
+    if (!deviceId || !authToken) {
+      Alert.alert('Error', 'Missing device ID or token');
+      return;
+    }
+
     try {
-      const result = await fetch("https://your.api/devices/register", { // server api endpoint
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: "USER123", // storage
-          deviceId: "RPi12345", // або connectedDevice.id
-          ssid: "MyWiFi", // або з localStorage/params
-        }),
+      const response = await fetch('https://60bf-85-114-193-81.ngrok-free.app/devices/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ deviceUuid: deviceId }),
       });
 
-      if (result.ok) {
-        router.push("/user");
+      if (response.ok) {
+        Alert.alert('Success', 'Device registered');
+        router.push('/user');
       } else {
-        Alert.alert("Помилка", "Не вдалося зареєструвати пристрій");
+        Alert.alert('Error', 'Device registration failed');
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      Alert.alert("Помилка", errorMessage);
+      Alert.alert('Error', 'Network error');
     }
   };
 
   return (
     <View style={{ padding: 20 }}>
-      <Text>Прив'язати пристрій до акаунту?</Text>
-      <Button title="Зареєструвати" onPress={registerDevice} />
+      <Text style={{ color: theme.text }}>Register Device?</Text>
+      <Button title="Register" onPress={registerDevice} color={theme.accent} />
     </View>
   );
 }

@@ -1,187 +1,132 @@
-import React, { useEffect, useState } from "react";
-import {
-  SafeAreaView,
-  View,
-  Text,
-  Button,
-  FlatList,
-  Alert,
-  ActivityIndicator,
-  TextInput,
-  PermissionsAndroid,
-  Platform,
-  ScrollView,
-  KeyboardAvoidingView,
-  StyleSheet,
-} from "react-native";
-import BleManager from "react-native-ble-manager";
-import { NativeModules, NativeEventEmitter } from "react-native";
-import { useRouter } from "expo-router";
-import IconButton from "../components/iconButton";
-import { useTheme } from "../context/themeContext";
+import React, { useEffect, useState } from 'react';
+import { SafeAreaView, View, Text, Button, FlatList, Alert, ActivityIndicator, TextInput, PermissionsAndroid, Platform, ScrollView, KeyboardAvoidingView, StyleSheet } from 'react-native';
+import { BleManager } from 'react-native-ble-plx';
+import { useRouter } from 'expo-router';
+import base64 from 'react-native-base64';
+import IconButton from '../components/iconButton';
+import { useTheme } from '../context/themeContext';
 
-const BleManagerModule = NativeModules.BleManager;
-const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
+const SERVICE_UUID = '12345678-1234-5678-1234-56789abcdef1';
+const SCAN_CHAR_UUID = '12345678-1234-5678-1234-56789abcdef2';
+const CONFIG_CHAR_UUID = '12345678-1234-5678-1234-56789abcdef3';
 
-const SERVICE_UUID = "12345678-1234-5678-1234-56789abcdef1";
-const SCAN_CHAR_UUID = "12345678-1234-5678-1234-56789abcdef2";
-const CONFIG_CHAR_UUID = "12345678-1234-5678-1234-56789abcdef3";
-
-type BLEDevice = {
-  id: string;
-  name?: string;
-};
-
-export default function BluetoothScreen() {
+const BluetoothScreen = () => {
   const { theme } = useTheme();
   const router = useRouter();
+  const bleManager = new BleManager();
 
-  const [devices, setDevices] = useState<BLEDevice[]>([]);
+  const [devices, setDevices] = useState<{ id: string; name?: string }[]>([]);
   const [isScanning, setIsScanning] = useState(false);
-  const [connectedDeviceId, setConnectedDeviceId] = useState<string | null>(null);
+  const [connectedDevice, setConnectedDevice] = useState<any>(null);
   const [wifiNetworks, setWifiNetworks] = useState<string[]>([]);
   const [selectedSSID, setSelectedSSID] = useState<string | null>(null);
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    BleManager.start({ showAlert: false });
+  const requestPermissions = async () => {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+      ]);
 
-    const handleDiscover = (device: any) => {
-      if (device.name?.includes("RaspberryPi_WiFiConfig")) {
-        setDevices((prev) =>
-          prev.some((d) => d.id === device.id) ? prev : [...prev, device]
-        );
+      const allGranted = Object.values(granted).every(status => status === PermissionsAndroid.RESULTS.GRANTED);
+
+      if (!allGranted) {
+        Alert.alert('Permissions Required', 'Please grant all permissions to use Bluetooth.');
+        return false;
       }
-    };
+    }
+    return true;
+  };
 
-    const handleStop = () => setIsScanning(false);
+  const startScan = async () => {
+    const permissionOk = await requestPermissions();
+    if (!permissionOk || isScanning) return;
 
-    const discoverSub = bleManagerEmitter.addListener("BleManagerDiscoverPeripheral", handleDiscover);
-    const stopSub = bleManagerEmitter.addListener("BleManagerStopScan", handleStop);
+    Alert.alert('Bluetooth Required', 'Please ensure Bluetooth is turned on before scanning.');
 
-    requestPermissions().then(async (granted) => {
-      if (granted) {
-        await BleManager.enableBluetooth().catch(() =>
-          Alert.alert("Bluetooth", "Please enable Bluetooth to proceed.")
-        );
+    setDevices([]);
+    setIsScanning(true);
 
-        await showBondedDevices();
-        startScan();
+    bleManager.startDeviceScan([SERVICE_UUID], null, (error, device) => {
+      if (error) {
+        Alert.alert('Scan Error', error.message);
+        setIsScanning(false);
+        return;
+      }
+
+      if (device?.name?.includes('RaspberryPi_WiFiConfig')) {
+        setDevices(prev => prev.some(d => d.id === device.id) ? prev : [...prev, { id: device.id, name: device.name ?? undefined }]);
       }
     });
 
-    return () => {
-      discoverSub.remove();
-      stopSub.remove();
-    };
-  }, []);
-
-  async function requestPermissions() {
-    if (Platform.OS === "android" && Platform.Version >= 31) {
-      const granted = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      ]);
-      return Object.values(granted).every(val => val === "granted");
-    }
-    return true;
-  }
-
-  const showBondedDevices = async () => {
-    try {
-      const bonded = await BleManager.getBondedPeripherals();
-      const filtered = bonded.filter((d: any) =>
-        d.name?.includes("RaspberryPi_WiFiConfig")
-      );
-      setDevices((prev) => [...prev, ...filtered]);
-    } catch (err) {
-      console.warn("Bonded devices error:", err);
-    }
-  };
-
-  const startScan = () => {
-    if (isScanning) return;
-    setDevices([]);
-    setIsScanning(true);
-    BleManager.scan([SERVICE_UUID], 10, false).catch((err) =>
-      Alert.alert("Scan error", err.message)
-    );
+    setTimeout(() => {
+      bleManager.stopDeviceScan();
+      setIsScanning(false);
+    }, 10000);
   };
 
   const connectToDevice = async (deviceId: string) => {
     setLoading(true);
     try {
-      await BleManager.connect(deviceId);
-      setConnectedDeviceId(deviceId);
-      await BleManager.retrieveServices(deviceId);
+      const device = await bleManager.connectToDevice(deviceId);
+      await device.discoverAllServicesAndCharacteristics();
+      setConnectedDevice(device);
 
-      const characteristic: number[] = await BleManager.read(
-        deviceId,
-        SERVICE_UUID,
-        SCAN_CHAR_UUID
-      );
-
-      const base64String = String.fromCharCode(...characteristic);
-      const decoded = atob(base64String);
-      const networks = decoded.split(",").filter(Boolean);
+      const characteristic = await device.readCharacteristicForService(SERVICE_UUID, SCAN_CHAR_UUID);
+      const value = characteristic?.value ? base64.decode(characteristic.value) : '';
+      const networks = value.split(',').filter(Boolean);
       setWifiNetworks(networks);
     } catch (e: any) {
-      Alert.alert("Connection Error", e.message || "Failed to connect");
+      Alert.alert('Connection Error', e.message || 'Failed to connect');
     }
     setLoading(false);
   };
 
   const sendWifiCredentials = async () => {
-    if (!connectedDeviceId || !selectedSSID) {
-      Alert.alert("Missing Info", "Please select a network and enter password.");
+    if (!connectedDevice || !selectedSSID) {
+      Alert.alert('Missing Info', 'Please select a network and enter password.');
       return;
     }
+
     setLoading(true);
     try {
-      const encoded = btoa(`${selectedSSID},${password}`);
-      const bytes = Array.from(new TextEncoder().encode(encoded));
-
-      await BleManager.write(connectedDeviceId, SERVICE_UUID, CONFIG_CHAR_UUID, bytes);
-      Alert.alert("Success", "Wi-Fi credentials sent.");
+      const encoded = base64.encode(`${selectedSSID},${password}`);
+      await connectedDevice.writeCharacteristicWithResponseForService(SERVICE_UUID, CONFIG_CHAR_UUID, encoded);
+      Alert.alert('Success', 'Wi-Fi credentials sent.');
+      router.push({ pathname: '/register', params: { deviceId: connectedDevice.id, ssid: selectedSSID } });
     } catch (e: any) {
-      Alert.alert("Send Error", e.message || "Failed to send credentials");
+      Alert.alert('Send Error', e.message || 'Failed to send credentials');
     }
     setLoading(false);
   };
 
+  useEffect(() => {
+    requestPermissions();
+    return () => {
+      bleManager.destroy();
+    };
+  }, []);
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <IconButton icon="🏠" onPress={() => router.push("/")} />
-        <Button
-          title={isScanning ? "Scanning..." : "Refresh"}
-          onPress={startScan}
-          disabled={isScanning}
-          color={theme.accent}
-        />
+        <IconButton icon="🏠" onPress={() => router.push('/')} />
+        <Button title={isScanning ? 'Scanning...' : 'Refresh'} onPress={startScan} disabled={isScanning} color={theme.accent} />
       </View>
 
       <View style={styles.container}>
         <Text style={[styles.title, { color: theme.text }]}>🔍 Available BLE Devices:</Text>
 
-        {(isScanning || loading) && <ActivityIndicator size="large" color={theme.accent} />}
-
-        {!isScanning && !loading && devices.length === 0 && (
-          <Text style={[styles.noDevices, { color: theme.muted }]}>No devices found</Text>
-        )}
+        {isScanning || loading ? <ActivityIndicator size="large" color={theme.accent} /> : null}
 
         <FlatList
           data={devices}
-          keyExtractor={(item: BLEDevice) => item.id}
-          renderItem={({ item }: { item: BLEDevice }) => (
-            <Button
-              title={item.name || "Unnamed Device"}
-              onPress={() => connectToDevice(item.id)}
-              color={theme.accent}
-              disabled={loading}
-            />
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => (
+            <Button title={item.name || 'Unnamed Device'} onPress={() => connectToDevice(item.id)} disabled={loading} color={theme.accent} />
           )}
         />
 
@@ -189,57 +134,32 @@ export default function BluetoothScreen() {
           <KeyboardAvoidingView behavior="padding" style={{ marginTop: 20 }}>
             <Text style={[styles.title, { color: theme.text }]}>📶 Select Wi-Fi Network:</Text>
             <ScrollView style={{ maxHeight: 150, marginVertical: 10 }}>
-              {wifiNetworks.map((ssid) => (
-                <Button
-                  key={ssid}
-                  title={ssid}
-                  onPress={() => setSelectedSSID(ssid)}
-                  color={selectedSSID === ssid ? theme.accent : undefined}
-                />
+              {wifiNetworks.map(ssid => (
+                <Button key={ssid} title={ssid} onPress={() => setSelectedSSID(ssid)} color={selectedSSID === ssid ? theme.accent : undefined} />
               ))}
             </ScrollView>
-
-            {selectedSSID && (
-              <>
-                <Text style={[styles.title, { color: theme.text }]}>🔒 Enter Password:</Text>
-                <TextInput
-                  style={[styles.input, { color: theme.text, borderColor: theme.accent }]}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Password"
-                  placeholderTextColor={theme.muted}
-                  secureTextEntry
-                />
-                <Button
-                  title="Send Wi-Fi Credentials"
-                  onPress={sendWifiCredentials}
-                  color={theme.accent}
-                  disabled={loading || password.length === 0}
-                />
-              </>
-            )}
+            <TextInput
+              style={[styles.input, { color: theme.text, borderColor: theme.accent }]}
+              placeholder="Password"
+              placeholderTextColor={theme.muted}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+            <Button title="Send Wi-Fi Credentials" onPress={sendWifiCredentials} disabled={loading || !password} color={theme.accent} />
           </KeyboardAvoidingView>
         )}
       </View>
     </SafeAreaView>
   );
-}
+};
+
+export default BluetoothScreen;
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
+  header: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 10 },
   container: { flex: 1, paddingHorizontal: 20 },
   title: { fontSize: 20, marginBottom: 10 },
-  noDevices: { textAlign: "center", marginTop: 20 },
-  input: {
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
-  },
+  input: { borderWidth: 1, borderRadius: 5, padding: 10, marginBottom: 15 },
 });

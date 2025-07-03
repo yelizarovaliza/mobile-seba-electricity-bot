@@ -9,7 +9,10 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,8 +26,14 @@
         "BLUETOOTH_ADMIN",
         "BLUETOOTH_SCAN",
         "BLUETOOTH_CONNECT",
+        "ACCESS_FINE_LOCATION",
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_SCAN",
+        "BLUETOOTH_CONNECT",
         "ACCESS_FINE_LOCATION"
-      ]
+      ],
+      "runtimeVersion": "1.0.1"
     },
     "web": {
       "bundler": "metro",
@@ -42,13 +51,7 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      [
-        "react-native-ble-manager",
-        {
-          "bluetoothAlwaysPermission": "Allow Bluetooth access at all times",
-          "bluetoothPeripheralPermission": "Allow this app to connect to and manage BLE devices"
-        }
-      ]
+      "react-native-ble-plx"
     ],
     "experiments": {
       "typedRoutes": true
@@ -58,6 +61,9 @@
       "eas": {
         "projectId": "0ca74f3d-4394-445b-9b02-2bee231c0508"
       }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0ca74f3d-4394-445b-9b02-2bee231c0508"
     }
   }
 }
