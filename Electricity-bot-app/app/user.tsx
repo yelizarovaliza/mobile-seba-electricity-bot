@@ -1,72 +1,76 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View, Button, Alert, TouchableOpacity } from 'react-native';
+import { FlatList, StyleSheet, Text, View, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/themeContext';
 import IconButton from '../components/iconButton';
 import DeviceCard from '../components/deviceCard';
 import { useAuth } from '../context/authContext';
-import {API_BASE_URL} from '../utils/apiConfig'
+import { apiRequest } from '../utils/apiClient';
+
+interface Device {
+  uuid: string;
+  name?: string;
+  status?: string;
+}
+
+interface User {
+  firstName: string;
+  lastName: string;
+  email: string;
+  gender: string;
+  timeZone: string;
+}
 
 const UserProfile = () => {
   const { theme } = useTheme();
   const { userId, authToken } = useAuth();
   const router = useRouter();
 
-  const [user, setUser] = useState<{ name: string; address: string }>({ name: '', address: '' });
-  const [devices, setDevices] = useState<{ id: string; status: string }[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [devices, setDevices] = useState<Device[]>([]);
 
-  const loadUserData = () => {
-    if (!userId || !authToken) return;
+  const loadUserData = async () => {
 
-    fetch(`https://your.api/user/profile?userId=${userId}`, {
-      headers: { Authorization: `Bearer ${authToken}` },
-    })
-      .then(res => res.json())
-      .then(data => setUser({ name: data.name, address: data.address }))
-      .catch(() => Alert.alert('Error', 'Failed to load user info'));
+    try {
+      const userData = await apiRequest<User>('/user/me', 'GET', undefined, true);
+      setUser(userData);
 
-    fetch(`https://your.api/user/devices?userId=${userId}`, {
-      headers: { Authorization: `Bearer ${authToken}` },
-    })
-      .then(res => res.json())
-      .then(data => setDevices(data.devices))
-      .catch(() => Alert.alert('Error', 'Failed to load devices'));
+      const deviceList = await apiRequest<Device[]>(
+        `/devices?email=${userId}`,
+        'GET',
+        undefined,
+        true,
+        authToken
+      );
+      setDevices(deviceList);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to load data');
+    }
+  };
+
+  const handleDeleteDevice = (uuid: string) => {
+    Alert.alert('Delete Device', 'Are you sure you want to remove this device?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await apiRequest('/devices/delete', 'DELETE', { uuid }, true, authToken);
+            Alert.alert('Deleted', 'Device removed successfully');
+            loadUserData();
+          } catch (err: any) {
+            Alert.alert('Error', err.message || 'Failed to delete device');
+          }
+        },
+      },
+    ]);
   };
 
   useEffect(() => {
     loadUserData();
   }, [userId, authToken]);
-
-  const handleDeleteDevice = (deviceId: string) => {
-  Alert.alert('Delete Device', 'Are you sure you want to remove this device?', [
-    { text: 'Cancel', style: 'cancel' },
-    {
-      text: 'Delete',
-      style: 'destructive',
-      onPress: async () => {
-        try {
-          const response = await fetch('${API_BASE_URL}/devices/delete/' + deviceId, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${authToken}`,
-            },
-          });
-
-          if (response.ok) {
-            Alert.alert('Deleted', 'Device deleted');
-            loadUserData();
-          } else {
-            Alert.alert('Error', 'Failed to delete device');
-          }
-        } catch (err) {
-          Alert.alert('Error', 'Network error');
-        }
-      },
-    },
-  ]);
-};
-
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -78,8 +82,17 @@ const UserProfile = () => {
 
       <View style={styles.container}>
         <Text style={[styles.title, { color: theme.text }]}>User Profile</Text>
-        <Text style={[styles.info, { color: theme.muted }]}>Name: {user.name}</Text>
-        <Text style={[styles.info, { color: theme.muted }]}>Address: {user.address}</Text>
+
+        {user ? (
+          <>
+            <Text style={[styles.info, { color: theme.muted }]}>Name: {user.firstName} {user.lastName}</Text>
+            <Text style={[styles.info, { color: theme.muted }]}>Email: {user.email}</Text>
+            <Text style={[styles.info, { color: theme.muted }]}>Gender: {user.gender}</Text>
+            <Text style={[styles.info, { color: theme.muted }]}>TimeZone: {user.timeZone}</Text>
+          </>
+        ) : (
+          <Text style={[styles.info, { color: theme.muted }]}>Loading user info...</Text>
+        )}
 
         <Text style={[styles.deviceTitle, { color: theme.text }]}>Devices:</Text>
 
@@ -88,17 +101,17 @@ const UserProfile = () => {
         ) : (
           <FlatList
             data={devices}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.uuid}
             renderItem={({ item }) => (
               <View>
                 <DeviceCard
-                  key={item.id}
-                  status={item.status}
-                  onViewPress={() => Alert.alert(`Device Status: ${item.status}`)}
+                  key={item.uuid}
+                  status={item.status || 'Unknown'}
+                  onViewPress={() => Alert.alert(`Device Status`, item.status || 'Unknown')}
                 />
                 <TouchableOpacity
                   style={{ marginTop: 8, backgroundColor: 'red', padding: 10, borderRadius: 6 }}
-                  onPress={() => handleDeleteDevice(item.id)}
+                  onPress={() => handleDeleteDevice(item.uuid)}
                 >
                   <Text style={{ color: 'white', textAlign: 'center' }}>Delete Device</Text>
                 </TouchableOpacity>
@@ -108,7 +121,9 @@ const UserProfile = () => {
         )}
 
         <View style={{ marginTop: 20 }}>
-          <Button title="➕ Add Device" onPress={() => router.push('/bluetooth')} color={theme.accent} />
+          <TouchableOpacity onPress={() => router.push('/bluetooth')} style={{ backgroundColor: theme.accent, padding: 12, borderRadius: 8 }}>
+            <Text style={{ textAlign: 'center', color: 'white', fontWeight: '600' }}>➕ Add Device</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>

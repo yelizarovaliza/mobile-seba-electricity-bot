@@ -1,79 +1,104 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Switch, StyleSheet, Alert, ScrollView } from 'react-native';
-import { useTheme } from '../context/themeContext';
-import { useNavigation, router } from 'expo-router';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, Button, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import IconButton from '../components/iconButton';
+import { useTheme } from '../context/themeContext';
 import { useAuth } from '../context/authContext';
+import IconButton from '../components/iconButton';
+import { apiRequest } from '../utils/apiClient';
 
-export default function SettingsScreen() {
-  const { theme, toggleTheme } = useTheme();
-  const navigation = useNavigation();
-  const { logout } = useAuth();
+interface Device {
+  uuid: string;
+  name: string;
+  status?: string;
+  lastChange?: string;
+}
 
-  const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', onPress: () => logout() },
-    ]);
-  };
+const HomeScreen = () => {
+  const { theme } = useTheme();
+  const { authToken, userId } = useAuth();
+  const router = useRouter();
 
-  const handleDeleteAccount = () => {
-    Alert.alert('Delete Account', 'This action is irreversible. Continue?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', onPress: async () => {
-        try {
-          const response = await fetch('https://your.api/user/delete', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-          });
-          if (response.ok) {
-            Alert.alert('Account deleted');
-            logout();
-          } else {
-            Alert.alert('Error', 'Failed to delete account');
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const loadDevicesAndStatus = async () => {
+    if (!authToken || !userId) return;
+
+    setLoading(true);
+    try {
+      const devicesData = await apiRequest<Device[]>(
+        `/devices?email=${userId}`,
+        'GET',
+        undefined,
+        true,
+        authToken
+      );
+
+      const devicesWithStatus = await Promise.all(
+        devicesData.map(async (device) => {
+          try {
+            const statusData = await apiRequest<{ status: string; lastChange: string }>(
+              `/devices/status/${device.uuid}`,
+              'GET',
+              undefined,
+              true,
+              authToken
+            );
+            return { ...device, status: statusData.status, lastChange: statusData.lastChange };
+          } catch {
+            return { ...device, status: 'Unavailable', lastChange: '-' };
           }
-        } catch (err) {
-          Alert.alert('Error', 'Network error during deletion');
-        }
-      }, style: 'destructive' },
-    ]);
+        })
+      );
+
+      setDevices(devicesWithStatus);
+    } catch (error) {
+      console.error('Failed to load devices:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    loadDevicesAndStatus();
+  }, [authToken]);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <View style={[styles.header]}>
-        <IconButton icon="🏠" onPress={() => navigation.goBack()} />
+      <View style={styles.header}>
+        <IconButton icon="👤" onPress={() => router.push('/user')} />
+        <Button title="Refresh" onPress={loadDevicesAndStatus} color={theme.accent} />
       </View>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={[styles.heading, { color: theme.text }]}>Settings</Text>
 
-        <View style={[styles.switchItem, { borderBottomColor: theme.muted }]}>
-          <Text style={[styles.itemLabel, { color: theme.text }]}>Dark Theme</Text>
-          <Switch value={theme.background === '#1c1c1e'} onValueChange={toggleTheme} />
-        </View>
+      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
+        {loading && <ActivityIndicator size="large" color={theme.accent} style={{ marginTop: 20 }} />}
 
-        <SettingsItem label="Log Out" onPress={handleLogout} theme={theme} textColor="red" />
-        <SettingsItem label="Delete Account" onPress={handleDeleteAccount} theme={theme} textColor="red" />
+        {devices.length === 0 && !loading ? (
+          <Text style={[styles.emptyText, { color: theme.text }]}>No devices linked</Text>
+        ) : (
+          devices.map((device) => (
+            <View key={device.uuid} style={[styles.card, { backgroundColor: theme.card }]}>
+              <Text style={[styles.deviceName, { color: theme.text }]}>{device.name || 'Unnamed Device'}</Text>
+              <Text style={[styles.deviceStatus, { color: theme.success }]}>Status: {device.status}</Text>
+              <Text style={[styles.lastChange, { color: theme.muted }]}>Last change: {device.lastChange}</Text>
+            </View>
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );
-}
+};
 
-function SettingsItem({ label, onPress, theme, textColor }) {
-  return (
-    <TouchableOpacity style={[styles.item, { borderBottomColor: theme.muted }]} onPress={onPress}>
-      <Text style={[styles.itemLabel, { color: textColor || theme.text }]}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
+export default HomeScreen;
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 20, marginTop: 10 },
   safeArea: { flex: 1 },
-  container: { padding: 20, paddingBottom: 40 },
-  heading: { fontSize: 20, fontWeight: 'bold', marginBottom: 24 },
-  item: { paddingVertical: 16, borderBottomWidth: 0.5 },
-  itemLabel: { fontSize: 16 },
-  switchItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 0.5 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 10, marginTop: 10 },
+  container: { flexGrow: 1, padding: 20, gap: 16 },
+  card: { padding: 20, borderRadius: 12 },
+  deviceName: { fontSize: 18, fontWeight: '600', marginBottom: 6 },
+  deviceStatus: { fontSize: 16 },
+  lastChange: { fontSize: 14 },
+  emptyText: { fontSize: 16, textAlign: 'center', marginTop: 30 },
 });

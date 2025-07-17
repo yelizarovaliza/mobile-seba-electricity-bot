@@ -32,7 +32,9 @@ const BluetoothScreen = () => {
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
       ]);
 
-      const allGranted = Object.values(granted).every(status => status === PermissionsAndroid.RESULTS.GRANTED);
+      const allGranted = Object.values(granted).every(
+        status => status === PermissionsAndroid.RESULTS.GRANTED
+      );
 
       if (!allGranted) {
         Alert.alert('Permissions Required', 'Please grant all permissions to use Bluetooth.');
@@ -96,26 +98,33 @@ const BluetoothScreen = () => {
     try {
       const encoded = base64.encode(`${selectedSSID},${password}`);
       await connectedDevice.writeCharacteristicWithResponseForService(SERVICE_UUID, CONFIG_CHAR_UUID, encoded);
+
       Alert.alert('Success', 'Wi-Fi credentials sent.');
-      router.push({ pathname: '/register', params: { deviceId: connectedDevice.id, ssid: selectedSSID } });
+
+      router.push({
+        pathname: '/connect',
+        params: {
+          ssid: selectedSSID,
+          deviceId: connectedDevice.id,
+        },
+      });
     } catch (e: any) {
       Alert.alert('Send Error', e.message || 'Failed to send credentials');
     }
     setLoading(false);
   };
 
-  useEffect(() => {
-    requestPermissions();
-    return () => {
-      bleManager.destroy();
-    };
-  }, []);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <IconButton icon="🏠" onPress={() => router.push('/')} />
-        <Button title={isScanning ? 'Scanning...' : 'Refresh'} onPress={startScan} disabled={isScanning} color={theme.accent} />
+        <Button
+          title={isScanning ? 'Scanning...' : 'Refresh'}
+          onPress={startScan}
+          disabled={isScanning}
+          color={theme.accent}
+        />
       </View>
 
       <View style={styles.container}>
@@ -127,7 +136,12 @@ const BluetoothScreen = () => {
           data={devices}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <Button title={item.name || 'Unnamed Device'} onPress={() => connectToDevice(item.id)} disabled={loading} color={theme.accent} />
+            <Button
+              title={item.name || 'Unnamed Device'}
+              onPress={() => connectToDevice(item.id)}
+              disabled={loading}
+              color={theme.accent}
+            />
           )}
         />
 
@@ -136,7 +150,12 @@ const BluetoothScreen = () => {
             <Text style={[styles.title, { color: theme.text }]}>📶 Select Wi-Fi Network:</Text>
             <ScrollView style={{ maxHeight: 150, marginVertical: 10 }}>
               {wifiNetworks.map(ssid => (
-                <Button key={ssid} title={ssid} onPress={() => setSelectedSSID(ssid)} color={selectedSSID === ssid ? theme.accent : undefined} />
+                <Button
+                  key={ssid}
+                  title={ssid}
+                  onPress={() => setSelectedSSID(ssid)}
+                  color={selectedSSID === ssid ? theme.accent : undefined}
+                />
               ))}
             </ScrollView>
             <TextInput
@@ -147,7 +166,12 @@ const BluetoothScreen = () => {
               value={password}
               onChangeText={setPassword}
             />
-            <Button title="Send Wi-Fi Credentials" onPress={sendWifiCredentials} disabled={loading || !password} color={theme.accent} />
+            <Button
+              title="Send Wi-Fi Credentials"
+              onPress={sendWifiCredentials}
+              disabled={loading || !password}
+              color={theme.accent}
+            />
           </KeyboardAvoidingView>
         )}
       </View>
@@ -159,8 +183,18 @@ export default BluetoothScreen;
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 10 },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
   container: { flex: 1, paddingHorizontal: 20 },
   title: { fontSize: 20, marginBottom: 10 },
-  input: { borderWidth: 1, borderRadius: 5, padding: 10, marginBottom: 15 },
+  input: {
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+  },
 });

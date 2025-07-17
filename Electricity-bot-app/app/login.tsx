@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
-import { useTheme } from '../context/themeContext';
+import {StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView, KeyboardAvoidingView, Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../context/themeContext';
 import IconButton from '../components/iconButton';
 import { useAuth } from '../context/authContext';
-import { API_BASE_URL } from '../utils/apiConfig';
+import { apiRequest } from '../utils/apiClient';
 
 const LoginScreen = () => {
   const { theme } = useTheme();
@@ -13,10 +13,12 @@ const LoginScreen = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isSecurePassword = (password) => /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isSecurePassword = (password: string) =>
+    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
 
   const handleLogin = async () => {
     if (!isValidEmail(email) || !isSecurePassword(password)) {
@@ -27,42 +29,65 @@ const LoginScreen = () => {
     setError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      const data = await apiRequest<{ id: string; token: string }>(
+        '/login',
+        'POST',
+        { username: email, password },
+        false
+      );
 
-      const data = await response.json();
-
-      if (response.ok) {
-        login(email, data.token);
-        router.push('/');
-      } else {
-        setError(data.error || 'Invalid email or password.');
-      }
-    } catch (error) {
-      setError(error.message || 'Network error. Please try again later');
+      await login(data.id, data.token);
+      router.push('/');
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Try again later.');
     }
   };
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <IconButton icon="🏠" onPress={() => router.push('/')} style={{ marginLeft: 10 }} />
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <Text style={[styles.title, { color: theme.text }]}>🔐 Login</Text>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
+          <Text style={[styles.title, { color: theme.text }]}>🔐 Login</Text>
 
-        <TextInput style={[styles.input, { backgroundColor: theme.card, color: theme.text }]} placeholder="Email" placeholderTextColor={theme.muted} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-        <TextInput style={[styles.input, { backgroundColor: theme.card, color: theme.text }]} placeholder="Password" placeholderTextColor={theme.muted} value={password} onChangeText={setPassword} secureTextEntry />
+          <TextInput
+            style={[styles.input, { backgroundColor: theme.card, color: theme.text }]}
+            placeholder="Email"
+            placeholderTextColor={theme.muted}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-        {error !== '' && <Text style={[styles.errorText]}>{error}</Text>}
+          <View style={[styles.passwordWrapper, { borderColor: theme.accent }]}>
+            <TextInput
+              style={[styles.inputField, { color: theme.text }]}
+              placeholder="Password"
+              placeholderTextColor={theme.muted}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Text style={styles.eye}>{showPassword ? '🙈' : '👁️'}</Text>
+            </TouchableOpacity>
+          </View>
 
-        <TouchableOpacity style={[styles.button, { backgroundColor: theme.accent }]} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Login</Text>
-        </TouchableOpacity>
+          {error !== '' && <Text style={[styles.errorText]}>{error}</Text>}
 
-        <Text style={[styles.switchText, { color: theme.text }]}>Don't have an account? <Text style={[styles.linkText, { color: theme.accent }]} onPress={() => router.push('/signup')}>Sign Up</Text></Text>
-      </View>
+          <TouchableOpacity style={[styles.button, { backgroundColor: theme.accent }]} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Login</Text>
+          </TouchableOpacity>
+
+          <Text style={[styles.switchText, { color: theme.text }]}>
+            Don't have an account?{' '}
+            <Text style={[styles.linkText, { color: theme.accent }]} onPress={() => router.push('/signup')}>
+              Sign Up
+            </Text>
+          </Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -70,30 +95,32 @@ const LoginScreen = () => {
 export default LoginScreen;
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    gap: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  input: {
-    padding: 12,
+  safeArea: { flex: 1 },
+  container: { padding: 20, paddingBottom: 40, justifyContent: 'center' },
+  title: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 },
+  input: { padding: 12, borderRadius: 8, fontSize: 16, marginBottom: 12 },
+  passwordWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
     borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 12,
+  },
+  inputField: {
+    flex: 1,
+    paddingVertical: 12,
     fontSize: 16,
+  },
+  eye: {
+    fontSize: 20,
+    marginLeft: 10,
   },
   button: {
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: 10,
   },
   buttonText: {
     color: 'white',
@@ -103,6 +130,7 @@ const styles = StyleSheet.create({
   switchText: {
     textAlign: 'center',
     fontSize: 14,
+    marginTop: 16,
   },
   linkText: {
     fontWeight: 'bold',
@@ -111,5 +139,5 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
     fontSize: 14,
-},
+  },
 });
