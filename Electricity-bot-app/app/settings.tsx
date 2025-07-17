@@ -10,7 +10,7 @@ import { apiRequest } from '../utils/apiClient';
 
 const SettingsScreen = () => {
     const router = useRouter();
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const { authToken, logout } = useAuth();
 
   const [firstName, setFirstName] = useState('');
@@ -27,7 +27,7 @@ const SettingsScreen = () => {
           lastName: string;
           gender: 'male' | 'female' | 'other';
           timeZone: string;
-        }>('/user/me', 'GET', undefined, true, authToken);
+        }>('/user/me', 'GET', undefined, true);
 
         setFirstName(data.firstName || '');
         setLastName(data.lastName || '');
@@ -56,7 +56,6 @@ const SettingsScreen = () => {
           timeZone,
         },
         true,
-        authToken
       );
       Alert.alert('Success', 'Profile updated successfully');
     } catch (err: any) {
@@ -141,4 +140,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
   },
+  switchItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginTop: 30,
+  paddingVertical: 10,
+  borderBottomWidth: 1,
+},
+itemLabel: {
+  fontSize: 16,
+  fontWeight: '500',
+},
 });

@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
 import React, { useState } from 'react';
+import { useRouter } from 'expo-router';
 import {StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView, KeyboardAvoidingView, Platform} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/themeContext';
@@ -9,6 +9,7 @@ import { apiRequest } from '../utils/apiClient';
 
 const LoginScreen = () => {
   const { theme } = useTheme();
+  const router = useRouter();
   const { login } = useAuth();
 
   const [email, setEmail] = useState('');

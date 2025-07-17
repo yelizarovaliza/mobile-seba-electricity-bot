@@ -40,8 +40,7 @@ const UserProfile = () => {
         `/devices?email=${userId}`,
         'GET',
         undefined,
-        true,
-        authToken
+        true
       );
       setDevices(deviceList);
     } catch (err: any) {
@@ -57,7 +56,7 @@ const UserProfile = () => {
         style: 'destructive',
         onPress: async () => {
           try {
-            await apiRequest('/devices/delete', 'DELETE', { uuid }, true, authToken);
+            await apiRequest('/devices/delete', 'DELETE', { uuid }, true);
             Alert.alert('Deleted', 'Device removed successfully');
             loadUserData();
           } catch (err: any) {

@@ -33,7 +33,6 @@ const HomeScreen = () => {
         'GET',
         undefined,
         true,
-        authToken
       );
 
       const devicesWithStatus = await Promise.all(
@@ -44,7 +43,6 @@ const HomeScreen = () => {
               'GET',
               undefined,
               true,
-              authToken
             );
             return { ...device, status: statusData.status, lastChange: statusData.lastChange };
           } catch {
