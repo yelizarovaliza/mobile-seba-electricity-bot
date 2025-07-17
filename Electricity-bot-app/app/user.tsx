@@ -76,8 +76,8 @@ const UserProfile = () => {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <IconButton icon="🏠" onPress={() => router.push('/')} />
-        <IconButton icon="⚙️" onPress={() => router.push('./settings')} style={{ marginLeft: 10 }} />
-        <IconButton icon="🔐" onPress={() => router.push('./signup')} style={{ marginLeft: 10 }} />
+        <IconButton icon="⚙️" onPress={() => router.push('/settings')} style={{ marginLeft: 10 }} />
+        <IconButton icon="🔐" onPress={() => router.push('/signup')} style={{ marginLeft: 10 }} />
       </View>
 
       <View style={styles.container}>
