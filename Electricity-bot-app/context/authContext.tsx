@@ -40,13 +40,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Збереження токену при логіні
-  const login = async (token: string) => {
+  const login = async (token: string): Promise<boolean> => {
+    if (typeof token !== 'string') {
+      console.warn('Login failed: token is not a string');
+      Alert.alert('Login Error', 'Invalid token received from server.');
+      return false;
+    }
+
     try {
       await SecureStore.setItemAsync('authToken', token);
       setAuthToken(token);
+      return true;
     } catch (err) {
       console.warn('Login error:', err);
-      Alert.alert('Error', 'Не вдалося зберегти токен');
+      Alert.alert('Login Error', 'Failed to securely save your session.');
+      return false;
     }
   };
 

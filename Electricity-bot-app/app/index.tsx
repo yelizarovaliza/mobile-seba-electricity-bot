@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Button, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/themeContext';
@@ -17,21 +17,56 @@ interface Device {
 
 const HomeScreen = () => {
   const { theme } = useTheme();
-  const { authToken } = useAuth();
+  const { authToken, logout, isLoading } = useAuth();
   const router = useRouter();
 
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [email, setEmail] = useState<string>('');
+
+  useEffect(() => {
+      if (!isLoading && !authToken) {
+        router.replace('/login');
+      }
+    }, [authToken]);
+
+    useEffect(() => {
+      const fetchEmail = async () => {
+        try {
+          const user = await apiRequest<{ email: string }>(
+            '/user/me',
+            'GET',
+            undefined,
+            { token: authToken! }
+          );
+          setEmail(user.email);
+        } catch (err: any) {
+          console.error('User fetch failed:', err);
+          if (err.message.includes('Unauthorized')) {
+            logout();
+          } else {
+            Alert.alert('Error', err.message || 'Failed to load user info');
+          }
+        }
+      };
+
+      if (authToken) fetchEmail();
+    }, [authToken]);
 
   const loadDevicesAndStatus = async () => {
-    if (!authToken) {
+    if (!authToken || !email) {
       Alert.alert('Not authenticated', 'Please log in again.');
       return;
     }
 
     setLoading(true);
     try {
-      const devicesData = await apiRequest<Device[]>(`/devices?email=${email}`, 'GET', undefined, true);
+      const devicesData = await apiRequest<Device[]>(
+          `/devices?email=${email}`,
+          'GET',
+          undefined,
+          {token: authToken}
+      );
       const safeDevices = Array.isArray(devicesData) ? devicesData : [];
 
       const devicesWithStatus = await Promise.all(
@@ -41,7 +76,7 @@ const HomeScreen = () => {
               `/devices/status/${device.uuid}`,
               'GET',
               undefined,
-              true
+              {token: authToken}
             );
             return {
               ...device,
@@ -61,12 +96,16 @@ const HomeScreen = () => {
 
       setDevices(devicesWithStatus);
     } catch (error: any) {
-      console.warn('Failed to load devices list:', error.message);
-      setDevices([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+            if (error.message.includes('Unauthorized')) {
+              logout();
+            } else {
+              console.warn('Failed to load devices list:', error.message);
+              setDevices([]);
+            }
+          } finally {
+            setLoading(false);
+          }
+        };
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>

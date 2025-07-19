@@ -26,26 +26,52 @@ interface User {
 
 const UserProfile = () => {
   const { theme } = useTheme();
-  const { authToken } = useAuth();
+  const { authToken, logout, isLoading } = useAuth();
   const router = useRouter();
 
   const [user, setUser] = useState<User | null>(null);
   const [devices, setDevices] = useState<Device[]>([]);
   const [deviceLoading, setDeviceLoading] = useState(false);
 
+  useEffect(() => {
+      if (!isLoading && !authToken) {
+        router.replace('/login');
+      }
+    }, [authToken]);
+
   const loadUserData = async () => {
     try {
-      const userData = await apiRequest<User>('/user/me', 'GET', undefined, true);
+      const userData = await apiRequest<User>(
+          '/user/me',
+          'GET',
+          undefined,
+          {token: authToken!}
+      );
       setUser(userData);
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to load user info');
-    }
-  };
+            console.error('Failed to load user info:', err);
+            if (err.message.includes('Unauthorized')) {
+              logout();
+            } else {
+              Alert.alert('Error', err.message || 'Failed to load user info');
+            }
+          }
+        };
 
   const fetchDevices = async () => {
+    if (!user?.email) {
+      Alert.alert('User email missing', 'Cannot fetch devices without user email.');
+      return;
+    }
+
     setDeviceLoading(true);
     try {
-      const list = await apiRequest<Device[]>(`/devices?email=${user?.email}`, 'GET', undefined, true);
+      const list = await apiRequest<Device[]>(
+        `/devices?email=${user.email}`,
+        'GET',
+        undefined,
+        { token: authToken! }
+      );
       setDevices(Array.isArray(list) ? list : []);
     } catch (err: any) {
       console.warn('No devices found or failed to load devices:', err.message);
@@ -54,6 +80,12 @@ const UserProfile = () => {
       setDeviceLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (authToken) {
+      loadUserData();
+    }
+  }, [authToken]);
 
   const handleDeleteDevice = (uuid: string) => {
     Alert.alert('Delete Device', 'Are you sure you want to remove this device?', [
@@ -116,7 +148,7 @@ const UserProfile = () => {
                 <DeviceCard
                   key={item.uuid}
                   status={item.status || 'Unknown'}
-                  onViewPress={() => Alert.alert(`Device Status`, item.status || 'Unknown')}
+                  onViewPress={() => router.push(`/history/${item.uuid}`)}
                 />
                 <TouchableOpacity
                   style={{ marginTop: 8, backgroundColor: 'red', padding: 10, borderRadius: 6 }}

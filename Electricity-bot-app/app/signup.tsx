@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/themeContext';
@@ -8,9 +8,11 @@ import { useAuth } from '../context/authContext';
 import { apiRequest } from '../utils/apiClient';
 import { Picker } from '@react-native-picker/picker';
 
+
 const SignupScreen = () => {
   const { theme } = useTheme();
-  const { login } = useAuth();
+  const { login, authToken } = useAuth();
+  const router = useRouter();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -26,6 +28,12 @@ const SignupScreen = () => {
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isSecurePassword = (password: string) => password.length >= 8;
+
+  useEffect(() => {
+      if (authToken) {
+        router.replace('/');
+      }
+    }, [authToken]);
 
   const handleSignup = async () => {
     if (!firstName || !lastName || !gender) {
@@ -45,19 +53,22 @@ const SignupScreen = () => {
     setError('');
 
     try {
-      const data = await apiRequest<{ id: string; token: string }>(
+      const token = await apiRequest<string>(
         '/register',
         'POST',
         { firstName, lastName, gender, role, email, password },
-        false
+        {}
       );
 
-        console.log('Registration successful:', data); // 👈 log success
-
-      await login(data.token);
-      router.push('/');
+      console.log('Registration successful:', token);
+      const success = await login(token);
+      if (success) {
+        router.replace('/');
+      } else {
+        Alert.alert('Signup Error', 'Your account was created, but we couldn’t save your session. Please try logging in.');
+      }
     } catch (err: any) {
-        console.error('Signup error:', err); // 👈 log error
+        console.error('Signup error:', err);
       setError(err.message || 'Signup failed. Try again later.');
     }
   };

@@ -3,21 +3,27 @@ import { useRouter } from 'expo-router';
 import { View, Text, TextInput, Button, Alert, StyleSheet, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
-
 import { useTheme } from '../context/themeContext';
 import { useAuth } from '../context/authContext';
+import IconButton from '../components/iconButton';
 import { apiRequest } from '../utils/apiClient';
 
 const SettingsScreen = () => {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
-  const { authToken, logout } = useAuth();
+  const { authToken, logout, isLoading } = useAuth();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | 'other'>('other');
   const [timeZone, setTimeZone] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && !authToken) {
+      router.replace('/login');
+    }
+  }, [authToken]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -27,14 +33,24 @@ const SettingsScreen = () => {
           lastName: string;
           gender: 'male' | 'female' | 'other';
           timeZone?: string;
-        }>('/user/me', 'GET', undefined, authToken);
+        }>(
+          '/user/me',
+          'GET',
+          undefined,
+          { token: authToken! }
+        );
 
         setFirstName(data.firstName || '');
         setLastName(data.lastName || '');
         setGender(data.gender || 'other');
         setTimeZone(data.timeZone || '');
       } catch (err: any) {
-        Alert.alert('Error', err.message || 'Failed to load user data');
+        console.error('Load user error:', err);
+        if (err.message.includes('Unauthorized')) {
+          logout();
+        } else {
+          Alert.alert('Error', err.message || 'Failed to load user data');
+        }
       }
     };
 
@@ -53,16 +69,23 @@ const SettingsScreen = () => {
           gender,
           timeZone: timeZone.trim() || undefined,
         },
-        authToken
+        {token: authToken!}
       );
 
       Alert.alert('Success', 'Profile updated successfully');
+      router.push('/user');
+
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to update profile');
-    } finally {
-      setLoading(false);
-    }
-  };
+            console.error('Save profile error:', err);
+            if (err.message.includes('Unauthorized')) {
+              logout();
+            } else {
+              Alert.alert('Error', err.message || 'Failed to update profile');
+            }
+          } finally {
+            setLoading(false);
+          }
+        };
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>

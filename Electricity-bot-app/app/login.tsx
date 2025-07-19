@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import {StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView, KeyboardAvoidingView, Platform} from 'react-native';
+import {StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView, KeyboardAvoidingView, Platform, Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/themeContext';
 import IconButton from '../components/iconButton';
 import { useAuth } from '../context/authContext';
 import { apiRequest } from '../utils/apiClient';
 
+
 const LoginScreen = () => {
   const { theme } = useTheme();
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, authToken } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +20,12 @@ const LoginScreen = () => {
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isSecurePassword = (password: string) => password.length >= 8;
+
+  useEffect(() => {
+      if (authToken) {
+        router.replace('/');
+      }
+    }, [authToken]);
 
   const handleLogin = async () => {
     if (!isValidEmail(email) || !isSecurePassword(password)) {
@@ -29,18 +36,21 @@ const LoginScreen = () => {
     setError('');
 
     try {
-      const data = await apiRequest<{ id: string; token: string }>(
+      const token = await apiRequest<string>(
         '/login',
         'POST',
         { email, password },
-        false
+        {}
       );
 
-      console.log('login successful:', data); // 👈 log success
-
-
-      await login(data.token);
-      router.push('/');
+      console.log('login successful:', token);
+      console.log('Token raw type:', typeof token, token);
+      const success = await login(token);
+      if (success) {
+        router.replace('/');
+      } else {
+        Alert.alert('Login Error', 'You have logged in successfully, but your session could not be saved. Please try again.');
+      }
     } catch (err: any) {
       setError(err.message || 'Login failed. Try again later.');
     }

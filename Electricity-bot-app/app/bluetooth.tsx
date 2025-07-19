@@ -100,7 +100,7 @@ const BluetoothScreen = () => {
       const targetChar = allCharacteristics.find(c => c.uuid.toLowerCase() === SCAN_CHAR_UUID.toLowerCase());
 
       if (!targetChar) {
-        Alert.alert('Characteristic Missing', 'Не знайдено характеристику SCAN_CHAR_UUID');
+        Alert.alert('Characteristic Missing', 'Not found characteristics SCAN_CHAR_UUID');
         setLoading(false);
         return;
       }
@@ -159,7 +159,10 @@ const BluetoothScreen = () => {
       );
 
       Alert.alert('Success', 'Wi-Fi credentials sent.');
-      router.push('/user');
+      router.push({
+        pathname: '/register',
+        params: { uuid: connectedDevice.id }  // pass to registration page
+      });
 
     } catch (e: any) {
       console.error('[BLE] Send Error:', e);
