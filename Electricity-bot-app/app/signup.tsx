@@ -25,8 +25,7 @@ const SignupScreen = () => {
   const role = 'user';
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isSecurePassword = (password: string) =>
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
+  const isSecurePassword = (password: string) => password.length >= 8;
 
   const handleSignup = async () => {
     if (!firstName || !lastName || !gender) {
@@ -36,7 +35,7 @@ const SignupScreen = () => {
       setError('Please enter a valid email address.');
       return;
     } else if (!isSecurePassword(password)) {
-      setError('Password must be 8+ characters with a number and special character.');
+      setError('Password must be 8+ characters');
       return;
     } else if (password !== confirmPassword) {
       setError('Passwords do not match.');
@@ -53,9 +52,12 @@ const SignupScreen = () => {
         false
       );
 
-      await login(data.id, data.token);
+        console.log('Registration successful:', data); // 👈 log success
+
+      await login(data.token);
       router.push('/');
     } catch (err: any) {
+        console.error('Signup error:', err); // 👈 log error
       setError(err.message || 'Signup failed. Try again later.');
     }
   };

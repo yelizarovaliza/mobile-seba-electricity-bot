@@ -1,17 +1,15 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import * as SecureStore from "expo-secure-store";
-import { Alert } from "react-native";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import { Alert } from 'react-native';
 
 type AuthContextType = {
-  userId: string | null;
   authToken: string | null;
-  login: (userId: string, token: string) => Promise<void>;
+  login: (token: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
-  userId: null,
   authToken: null,
   login: async () => {},
   logout: async () => {},
@@ -21,19 +19,18 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userId, setUserId] = useState<string | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Завантаження токену з SecureStore
   useEffect(() => {
     const loadAuth = async () => {
       try {
-        const storedUserId = await SecureStore.getItemAsync("userId");
-        const storedToken = await SecureStore.getItemAsync("authToken");
-        setUserId(storedUserId);
-        setAuthToken(storedToken);
-      } catch (e) {
-        Alert.alert("Помилка", "Не вдалося отримати дані авторизації");
+        const token = await SecureStore.getItemAsync('authToken');
+        setAuthToken(token);
+      } catch (err) {
+        console.warn('Failed to load auth token:', err);
+        Alert.alert('Error', 'Помилка при завантаженні токену');
       } finally {
         setIsLoading(false);
       }
@@ -42,22 +39,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadAuth();
   }, []);
 
-  const login = async (id: string, token: string) => {
-    await SecureStore.setItemAsync("userId", id);
-    await SecureStore.setItemAsync("authToken", token);
-    setUserId(id);
-    setAuthToken(token);
+  // Збереження токену при логіні
+  const login = async (token: string) => {
+    try {
+      await SecureStore.setItemAsync('authToken', token);
+      setAuthToken(token);
+    } catch (err) {
+      console.warn('Login error:', err);
+      Alert.alert('Error', 'Не вдалося зберегти токен');
+    }
   };
 
+  // Видалення токену при виході
   const logout = async () => {
-    await SecureStore.deleteItemAsync("userId");
-    await SecureStore.deleteItemAsync("authToken");
-    setUserId(null);
-    setAuthToken(null);
+    try {
+      await SecureStore.deleteItemAsync('authToken');
+      setAuthToken(null);
+    } catch (err) {
+      console.warn('Logout error:', err);
+      Alert.alert('Error', 'Не вдалося видалити токен');
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ userId, authToken, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ authToken, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

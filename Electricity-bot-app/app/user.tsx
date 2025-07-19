@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View, Alert, TouchableOpacity } from 'react-native';
+import { FlatList, StyleSheet, Text, View, Alert, TouchableOpacity, Button } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/themeContext';
 import IconButton from '../components/iconButton';
@@ -15,36 +15,43 @@ interface Device {
 }
 
 interface User {
-  firstName: string;
-  lastName: string;
-  email: string;
-  gender: string;
-  timeZone: string;
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    gender: string;
+    timeZone: string;
+    role?: string;
 }
 
 const UserProfile = () => {
   const { theme } = useTheme();
-  const { userId, authToken } = useAuth();
+  const { authToken } = useAuth();
   const router = useRouter();
 
   const [user, setUser] = useState<User | null>(null);
   const [devices, setDevices] = useState<Device[]>([]);
+  const [deviceLoading, setDeviceLoading] = useState(false);
 
   const loadUserData = async () => {
-
     try {
       const userData = await apiRequest<User>('/user/me', 'GET', undefined, true);
       setUser(userData);
-
-      const deviceList = await apiRequest<Device[]>(
-        `/devices?email=${userId}`,
-        'GET',
-        undefined,
-        true
-      );
-      setDevices(deviceList);
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to load data');
+      Alert.alert('Error', err.message || 'Failed to load user info');
+    }
+  };
+
+  const fetchDevices = async () => {
+    setDeviceLoading(true);
+    try {
+      const list = await apiRequest<Device[]>(`/devices?email=${user?.email}`, 'GET', undefined, true);
+      setDevices(Array.isArray(list) ? list : []);
+    } catch (err: any) {
+      console.warn('No devices found or failed to load devices:', err.message);
+      setDevices([]);
+    } finally {
+      setDeviceLoading(false);
     }
   };
 
@@ -57,8 +64,7 @@ const UserProfile = () => {
         onPress: async () => {
           try {
             await apiRequest('/devices/delete', 'DELETE', { uuid }, true);
-            Alert.alert('Deleted', 'Device removed successfully');
-            loadUserData();
+            fetchDevices();
           } catch (err: any) {
             Alert.alert('Error', err.message || 'Failed to delete device');
           }
@@ -68,8 +74,10 @@ const UserProfile = () => {
   };
 
   useEffect(() => {
-    loadUserData();
-  }, [userId, authToken]);
+    if (authToken) {
+      loadUserData();
+    }
+  }, [authToken]);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -88,21 +96,23 @@ const UserProfile = () => {
             <Text style={[styles.info, { color: theme.muted }]}>Email: {user.email}</Text>
             <Text style={[styles.info, { color: theme.muted }]}>Gender: {user.gender}</Text>
             <Text style={[styles.info, { color: theme.muted }]}>TimeZone: {user.timeZone}</Text>
+            <Text style={[styles.info, { color: theme.muted }]}>Role: {user.role || 'user'}</Text>
           </>
         ) : (
           <Text style={[styles.info, { color: theme.muted }]}>Loading user info...</Text>
         )}
 
-        <Text style={[styles.deviceTitle, { color: theme.text }]}>Devices:</Text>
+        <View style={{ marginTop: 20 }}>
+          <Button title="🔍 Show My Devices" onPress={fetchDevices} color={theme.accent} disabled={deviceLoading} />
+        </View>
 
-        {devices.length === 0 ? (
-          <Text style={{ color: theme.muted }}>No devices linked.</Text>
-        ) : (
+        {devices.length > 0 && (
           <FlatList
+            style={{ marginTop: 20 }}
             data={devices}
             keyExtractor={(item) => item.uuid}
             renderItem={({ item }) => (
-              <View>
+              <View style={{ marginBottom: 12 }}>
                 <DeviceCard
                   key={item.uuid}
                   status={item.status || 'Unknown'}
@@ -137,5 +147,4 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, paddingTop: 10 },
   title: { fontSize: 24, marginBottom: 10 },
   info: { fontSize: 16, marginBottom: 4 },
-  deviceTitle: { marginTop: 30, fontSize: 20, marginBottom: 10 },
 });

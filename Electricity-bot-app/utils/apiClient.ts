@@ -8,38 +8,43 @@ export async function apiRequest<T = any>(
   path: string,
   method: HttpMethod = 'GET',
   body?: object,
-  authRequired: boolean = true
+  withAuth: boolean = false
 ): Promise<T> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+      'Content-Type': 'application/json',
+      };
 
-  if (authRequired) {
-    const token = await SecureStore.getItemAsync('authToken');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+  if (withAuth) {
+      const token = await SecureStore.getItemAsync('authToken');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
     }
-  }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers,
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+  console.log(`[API] ${method} ${path}`);
+  console.log('Status:', response.status);
+  console.log('Headers:', response.headers);
+  console.log('Authorization:', headers['Authorization']);
+  console.log('Body:', body);
 
   const contentType = response.headers.get('content-type');
 
-  let responseData;
-  if (contentType?.includes('application/json')) {
-    responseData = await response.json();
-  } else {
-    responseData = await response.text();
-  }
+    let responseData;
+    if (contentType?.includes('application/json')) {
+        responseData = await response.text();
+    } else {
+        responseData = await response.json();
+    }
 
-  if (!response.ok) {
-    const error = typeof responseData === 'string' ? { message: responseData } : responseData;
-    throw new Error(error?.error || error?.message || 'Request failed');
-  }
+    if (!response.ok) {
+      throw new Error(typeof responseData === 'string' ? responseData : responseData.error || 'Unknown error');
+    }
 
-  return responseData;
-}
+    return responseData;
+  }

@@ -10,6 +10,7 @@ import { useTheme } from '../context/themeContext';
 const SERVICE_UUID = '12345678-1234-5678-1234-56789abcdef1';
 const SCAN_CHAR_UUID = '12345678-1234-5678-1234-56789abcdef2';
 const CONFIG_CHAR_UUID = '12345678-1234-5678-1234-56789abcdef3';
+const MAX_WIFI_CREDENTIAL_LENGTH = 30;
 
 const BluetoothScreen = () => {
   const { theme } = useTheme();
@@ -51,9 +52,13 @@ const BluetoothScreen = () => {
     Alert.alert('Bluetooth Required', 'Please ensure Bluetooth is turned on before scanning.');
 
     setDevices([]);
+    setConnectedDevice(null);
+    setWifiNetworks([]);
+    setSelectedSSID(null);
+    setPassword('');
     setIsScanning(true);
 
-    bleManager.startDeviceScan([SERVICE_UUID], null, (error, device) => {
+    bleManager.startDeviceScan(null, null, (error, device) => {
       if (error) {
         Alert.alert('Scan Error', error.message);
         setIsScanning(false);
@@ -61,7 +66,11 @@ const BluetoothScreen = () => {
       }
 
       if (device?.name?.includes('RaspberryPi_WiFiConfig')) {
-        setDevices(prev => prev.some(d => d.id === device.id) ? prev : [...prev, { id: device.id, name: device.name ?? undefined }]);
+        setDevices(prev =>
+          prev.some(d => d.id === device.id)
+            ? prev
+            : [...prev, { id: device.id, name: device.name }]
+        );
       }
     });
 
@@ -74,19 +83,48 @@ const BluetoothScreen = () => {
   const connectToDevice = async (deviceId: string) => {
     setLoading(true);
     try {
-      const device = await bleManager.connectToDevice(deviceId);
+      console.log('[BLE] Connecting to device:', deviceId);
+      bleManager.stopDeviceScan();
+
+      const device = await bleManager.connectToDevice(deviceId, { autoConnect: false });
+      console.log('[BLE] Connected to:', device.name);
+
       await device.discoverAllServicesAndCharacteristics();
+      console.log('[BLE] Services and characteristics discovered');
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const allCharacteristics = await device.characteristicsForService(SERVICE_UUID);
+      console.log('[BLE] Characteristics:', allCharacteristics.map(c => c.uuid));
+
+      const targetChar = allCharacteristics.find(c => c.uuid.toLowerCase() === SCAN_CHAR_UUID.toLowerCase());
+
+      if (!targetChar) {
+        Alert.alert('Characteristic Missing', 'Не знайдено характеристику SCAN_CHAR_UUID');
+        setLoading(false);
+        return;
+      }
+
+      const read = await targetChar.read();
+      const value = read?.value ? base64.decode(read.value) : '';
+      console.log('[BLE] Raw value:', value);
+
+      const decoded = value;
+      console.log('[BLE] Decoded:', decoded);
+
+      const networks = decoded.split(',').filter(Boolean);
+      setWifiNetworks(networks);
       setConnectedDevice(device);
 
-      const characteristic = await device.readCharacteristicForService(SERVICE_UUID, SCAN_CHAR_UUID);
-      const value = characteristic?.value ? base64.decode(characteristic.value) : '';
-      const networks = value.split(',').filter(Boolean);
-      setWifiNetworks(networks);
     } catch (e: any) {
+      console.error('[BLE] connectToDevice error:', e);
       Alert.alert('Connection Error', e.message || 'Failed to connect');
     }
     setLoading(false);
   };
+
+
+
 
   const sendWifiCredentials = async () => {
     if (!connectedDevice || !selectedSSID) {
@@ -94,21 +132,37 @@ const BluetoothScreen = () => {
       return;
     }
 
+    const credentials = `${selectedSSID},${password}`;
+    if (credentials.length > MAX_WIFI_CREDENTIAL_LENGTH) {
+      Alert.alert('Too long', 'SSID + password is too long for device to accept.');
+      return;
+    }
+
     setLoading(true);
+
     try {
-      const encoded = base64.encode(`${selectedSSID},${password}`);
-      await connectedDevice.writeCharacteristicWithResponseForService(SERVICE_UUID, CONFIG_CHAR_UUID, encoded);
+      const connected = await connectedDevice.isConnected();
+      if (!connected) {
+        console.warn('[BLE] Reconnecting to device...');
+        await connectedDevice.connect();
+        await connectedDevice.discoverAllServicesAndCharacteristics();
+      }
+
+      const encoded = base64.encode(credentials);
+      console.log('[BLE] Sending encoded:', encoded);
+
+      await new Promise(resolve => setTimeout(resolve, 300));
+      await connectedDevice.writeCharacteristicWithoutResponseForService(
+        SERVICE_UUID,
+        CONFIG_CHAR_UUID,
+        encoded
+      );
 
       Alert.alert('Success', 'Wi-Fi credentials sent.');
+      router.push('/user');
 
-      router.push({
-        pathname: '/connect',
-        params: {
-          ssid: selectedSSID,
-          deviceId: connectedDevice.id,
-        },
-      });
     } catch (e: any) {
+      console.error('[BLE] Send Error:', e);
       Alert.alert('Send Error', e.message || 'Failed to send credentials');
     }
     setLoading(false);

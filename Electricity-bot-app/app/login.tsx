@@ -18,8 +18,7 @@ const LoginScreen = () => {
   const [error, setError] = useState('');
 
   const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isSecurePassword = (password: string) =>
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
+  const isSecurePassword = (password: string) => password.length >= 8;
 
   const handleLogin = async () => {
     if (!isValidEmail(email) || !isSecurePassword(password)) {
@@ -33,11 +32,14 @@ const LoginScreen = () => {
       const data = await apiRequest<{ id: string; token: string }>(
         '/login',
         'POST',
-        { username: email, password },
+        { email, password },
         false
       );
 
-      await login(data.id, data.token);
+      console.log('login successful:', data); // 👈 log success
+
+
+      await login(data.token);
       router.push('/');
     } catch (err: any) {
       setError(err.message || 'Login failed. Try again later.');

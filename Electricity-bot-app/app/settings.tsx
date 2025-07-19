@@ -9,7 +9,7 @@ import { useAuth } from '../context/authContext';
 import { apiRequest } from '../utils/apiClient';
 
 const SettingsScreen = () => {
-    const router = useRouter();
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const { authToken, logout } = useAuth();
 
@@ -26,8 +26,8 @@ const SettingsScreen = () => {
           firstName: string;
           lastName: string;
           gender: 'male' | 'female' | 'other';
-          timeZone: string;
-        }>('/user/me', 'GET', undefined, true);
+          timeZone?: string;
+        }>('/user/me', 'GET', undefined, authToken);
 
         setFirstName(data.firstName || '');
         setLastName(data.lastName || '');
@@ -38,9 +38,7 @@ const SettingsScreen = () => {
       }
     };
 
-    if (authToken) {
-      loadUser();
-    }
+    if (authToken) loadUser();
   }, [authToken]);
 
   const handleSave = async () => {
@@ -50,13 +48,14 @@ const SettingsScreen = () => {
         '/user/me',
         'PUT',
         {
-          firstName,
-          lastName,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
           gender,
-          timeZone,
+          timeZone: timeZone.trim() || undefined,
         },
-        true,
+        authToken
       );
+
       Alert.alert('Success', 'Profile updated successfully');
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to update profile');
@@ -88,7 +87,7 @@ const SettingsScreen = () => {
 
         <Text style={[styles.label, { color: theme.text }]}>Gender</Text>
         <View style={[styles.pickerWrapper, { borderColor: theme.accent }]}>
-          <Picker selectedValue={gender} onValueChange={(value) => setGender(value)}>
+          <Picker selectedValue={gender} onValueChange={value => setGender(value)}>
             <Picker.Item label="Male" value="male" />
             <Picker.Item label="Female" value="female" />
             <Picker.Item label="Other" value="other" />
@@ -117,7 +116,7 @@ const SettingsScreen = () => {
         </View>
 
         <View style={{ marginTop: 30 }}>
-          <Button title="Log Out" onPress={() => router.push('/login')} color="red" />
+          <Button title="Log Out" onPress={logout} color="red" />
         </View>
       </View>
     </SafeAreaView>
@@ -141,15 +140,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   switchItem: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginTop: 30,
-  paddingVertical: 10,
-  borderBottomWidth: 1,
-},
-itemLabel: {
-  fontSize: 16,
-  fontWeight: '500',
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 30,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  itemLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
 });
