@@ -99,7 +99,7 @@ const BluetoothScreen = () => {
       console.log('[BLE] First Read (UUID):', firstRead);
       setRealUuid(firstRead);
 
-      await new Promise(resolve => setTimeout(resolve, 500)); // short pause
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       const secondChar = await device.readCharacteristicForService(SERVICE_UUID, SCAN_CHAR_UUID);
       const secondRead = base64.decode(secondChar?.value || '');
@@ -115,9 +115,6 @@ const BluetoothScreen = () => {
     }
     setLoading(false);
   };
-
-
-
 
   const sendWifiCredentials = async () => {
     if (!connectedDevice || !selectedSSID) {

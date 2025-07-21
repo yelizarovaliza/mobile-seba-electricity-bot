@@ -126,7 +126,6 @@ const UserProfile = () => {
       </View>
 
       <View style={styles.container}>
-        <Text style={[styles.title, { color: theme.text }]}>User Profile</Text>
 
         {user ? (
           <>
@@ -145,8 +144,8 @@ const UserProfile = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={{ marginTop: 20 }}>
-          <Button title="🔍 Show My Devices" onPress={fetchDevices} color={theme.accent} disabled={deviceLoading} />
+        <View style={{ marginTop: 20, borderRadius: 50}}>
+          <Button  title="🔍 Show My Devices" onPress={fetchDevices} color={theme.accent} disabled={deviceLoading} />
         </View>
 
         {devices.length > 0 && (

@@ -125,7 +125,7 @@ const SettingsScreen = () => {
 
         <Text style={[styles.label, { color: theme.text }]}>Gender</Text>
         <View style={[styles.pickerWrapper, { borderColor: theme.accent }]}>
-          <Picker selectedValue={gender} onValueChange={value => setGender(value)}>
+          <Picker style={[{color: theme.muted}]}selectedValue={gender} onValueChange={value => setGender(value)}>
             <Picker.Item label="Male" value="male" />
             <Picker.Item label="Female" value="female" />
             <Picker.Item label="Other" value="other" />
@@ -134,7 +134,7 @@ const SettingsScreen = () => {
 
         <Text style={[styles.label, { color: theme.text }]}>Time Zone</Text>
         <TextInput
-          style={[styles.input, { color: theme.text, borderColor: theme.accent }]}
+          style={[styles.input, { color: theme.muted, borderColor: theme.accent }]}
           value={timeZone}
           onChangeText={setTimeZone}
           placeholder="e.g. Europe/Kyiv"
@@ -148,12 +148,12 @@ const SettingsScreen = () => {
           disabled={loading}
         />
 
-        <View style={[styles.switchItem, { borderBottomColor: theme.muted }]}>
+        <View style={[styles.switchItem]}>
           <Text style={[styles.itemLabel, { color: theme.text }]}>Dark Theme</Text>
           <Switch value={theme.background === '#1c1c1e'} onValueChange={toggleTheme} />
         </View>
 
-        <View style={{ marginTop: 30 }}>
+        <View style={{ marginTop: 20, padding: 12, borderRadius: 8 }}>
           <Button title="Log Out" onPress={logout} color="red" />
         </View>
       </View>
@@ -192,9 +192,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 30,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
+    marginTop: 25,
+    paddingVertical: 5,
   },
   itemLabel: {
     fontSize: 16,
