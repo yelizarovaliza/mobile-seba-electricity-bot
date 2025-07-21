@@ -8,6 +8,17 @@ import { useAuth } from '../context/authContext';
 import IconButton from '../components/iconButton';
 import { apiRequest } from '../utils/apiClient';
 
+const timeZones = [
+  'UTC',
+  'Europe/Kyiv',
+  'Europe/London',
+  'Europe/Berlin',
+  'America/New_York',
+  'America/Los_Angeles',
+  'Asia/Tokyo',
+  'Asia/Dubai',
+];
+
 const SettingsScreen = () => {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
@@ -89,6 +100,10 @@ const SettingsScreen = () => {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+        <View style={styles.header}>
+            <IconButton icon="⬅️" onPress={() => router.back()} />
+            <Text style={[styles.title, { color: theme.text }]}>⚙️ Settings</Text>
+        </View>
       <View style={styles.container}>
         <Text style={[styles.label, { color: theme.text }]}>First Name</Text>
         <TextInput
@@ -150,6 +165,17 @@ export default SettingsScreen;
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
+  header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingTop: 10,
+  },
+  title: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginLeft: 10,
+    },
   container: { padding: 20, gap: 14 },
   label: { fontSize: 16, fontWeight: '500' },
   input: {

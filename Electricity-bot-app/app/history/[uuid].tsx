@@ -1,4 +1,3 @@
-// app/history/[uuid].tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -54,7 +53,17 @@ const DeviceHistoryScreen = () => {
 
   const renderItem = ({ item }: { item: HistoryEntry }) => (
     <View style={[styles.item, { backgroundColor: theme.card }]}>
-      <Text style={[styles.status, { color: item.status === 'ON' ? theme.success : theme.error }]}>
+      <Text
+        style={[
+          styles.status,
+          {
+            color:
+              item.status === 'ON'
+                ? theme.success || '#4CD964'
+                : theme.error || '#FF3B30',
+          },
+        ]}
+      >
         {item.status === 'ON' ? '🟢 ON' : '🔴 OFF'}
       </Text>
       <Text style={[styles.timestamp, { color: theme.text }]}>
@@ -63,11 +72,12 @@ const DeviceHistoryScreen = () => {
     </View>
   );
 
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <IconButton icon="⬅️" onPress={() => router.back()} />
-        <Text style={[styles.title, { color: theme.text }]}>📜 Device History</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{}History</Text>
       </View>
 
       {loading ? (

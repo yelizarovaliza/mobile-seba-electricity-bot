@@ -20,6 +20,7 @@ const BluetoothScreen = () => {
   const [devices, setDevices] = useState<{ id: string; name?: string }[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [connectedDevice, setConnectedDevice] = useState<any>(null);
+  const [realUuid, setRealUuid] = useState<string | null>(null);
   const [wifiNetworks, setWifiNetworks] = useState<string[]>([]);
   const [selectedSSID, setSelectedSSID] = useState<string | null>(null);
   const [password, setPassword] = useState('');
@@ -92,27 +93,19 @@ const BluetoothScreen = () => {
       await device.discoverAllServicesAndCharacteristics();
       console.log('[BLE] Services and characteristics discovered');
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const scanChar = await device.readCharacteristicForService(SERVICE_UUID, SCAN_CHAR_UUID);
 
-      const allCharacteristics = await device.characteristicsForService(SERVICE_UUID);
-      console.log('[BLE] Characteristics:', allCharacteristics.map(c => c.uuid));
+      const firstRead = base64.decode(scanChar?.value || '');
+      console.log('[BLE] First Read (UUID):', firstRead);
+      setRealUuid(firstRead);
 
-      const targetChar = allCharacteristics.find(c => c.uuid.toLowerCase() === SCAN_CHAR_UUID.toLowerCase());
+      await new Promise(resolve => setTimeout(resolve, 500)); // short pause
 
-      if (!targetChar) {
-        Alert.alert('Characteristic Missing', 'Not found characteristics SCAN_CHAR_UUID');
-        setLoading(false);
-        return;
-      }
+      const secondChar = await device.readCharacteristicForService(SERVICE_UUID, SCAN_CHAR_UUID);
+      const secondRead = base64.decode(secondChar?.value || '');
+      console.log('[BLE] Second Read (Networks):', secondRead);
 
-      const read = await targetChar.read();
-      const value = read?.value ? base64.decode(read.value) : '';
-      console.log('[BLE] Raw value:', value);
-
-      const decoded = value;
-      console.log('[BLE] Decoded:', decoded);
-
-      const networks = decoded.split(',').filter(Boolean);
+      const networks = secondRead.split(',').filter(Boolean);
       setWifiNetworks(networks);
       setConnectedDevice(device);
 
@@ -159,9 +152,14 @@ const BluetoothScreen = () => {
       );
 
       Alert.alert('Success', 'Wi-Fi credentials sent.');
+      if (!realUuid) {
+        Alert.alert('Error', 'Device UUID is not available.');
+        return;
+      }
+
       router.push({
         pathname: '/register',
-        params: { uuid: connectedDevice.id }  // pass to registration page
+        params: { uuid: realUuid },
       });
 
     } catch (e: any) {

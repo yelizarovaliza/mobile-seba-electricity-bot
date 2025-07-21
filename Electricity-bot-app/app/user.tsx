@@ -72,8 +72,9 @@ const UserProfile = () => {
         undefined,
         { token: authToken! }
       );
-      setDevices(Array.isArray(list) ? list : []);
+    setDevices(Array.isArray(list.devices) ? list.devices : []);
     } catch (err: any) {
+      console.log('Devices to render:', list.devices);
       console.warn('No devices found or failed to load devices:', err.message);
       setDevices([]);
     } finally {
@@ -95,7 +96,12 @@ const UserProfile = () => {
         style: 'destructive',
         onPress: async () => {
           try {
-            await apiRequest('/devices/delete', 'DELETE', { uuid }, true);
+            await apiRequest(
+                `/devices/delete/${uuid}`,
+                'DELETE',
+                undefined,
+                {token: authToken! }
+            );
             fetchDevices();
           } catch (err: any) {
             Alert.alert('Error', err.message || 'Failed to delete device');
@@ -128,11 +134,16 @@ const UserProfile = () => {
             <Text style={[styles.info, { color: theme.muted }]}>Email: {user.email}</Text>
             <Text style={[styles.info, { color: theme.muted }]}>Gender: {user.gender}</Text>
             <Text style={[styles.info, { color: theme.muted }]}>TimeZone: {user.timeZone}</Text>
-            <Text style={[styles.info, { color: theme.muted }]}>Role: {user.role || 'user'}</Text>
           </>
         ) : (
           <Text style={[styles.info, { color: theme.muted }]}>Loading user info...</Text>
         )}
+
+        <View style={{ marginTop: 20 }}>
+          <TouchableOpacity onPress={() => router.push('/bluetooth')} style={{ backgroundColor: theme.accent, padding: 12, borderRadius: 8 }}>
+            <Text style={{ textAlign: 'center', color: 'white', fontWeight: '800' }}>➕ Add Device</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={{ marginTop: 20 }}>
           <Button title="🔍 Show My Devices" onPress={fetchDevices} color={theme.accent} disabled={deviceLoading} />
@@ -145,7 +156,9 @@ const UserProfile = () => {
             keyExtractor={(item) => item.uuid}
             renderItem={({ item }) => (
               <View style={{ marginBottom: 12 }}>
+
                 <DeviceCard
+                  name={item.name}
                   key={item.uuid}
                   status={item.status || 'Unknown'}
                   onViewPress={() => router.push(`/history/${item.uuid}`)}
@@ -160,12 +173,6 @@ const UserProfile = () => {
             )}
           />
         )}
-
-        <View style={{ marginTop: 20 }}>
-          <TouchableOpacity onPress={() => router.push('/bluetooth')} style={{ backgroundColor: theme.accent, padding: 12, borderRadius: 8 }}>
-            <Text style={{ textAlign: 'center', color: 'white', fontWeight: '600' }}>➕ Add Device</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </SafeAreaView>
   );
@@ -179,4 +186,5 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, paddingTop: 10 },
   title: { fontSize: 24, marginBottom: 10 },
   info: { fontSize: 16, marginBottom: 4 },
+  deviceTitle: { marginTop: 30, fontSize: 20, marginBottom: 10 },
 });

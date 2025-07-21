@@ -57,5 +57,6 @@ export async function apiRequest<T = any>(
     );
   }
 
+  console.log('[API] Parsed response body:', responseData);
   return responseData;
 }
